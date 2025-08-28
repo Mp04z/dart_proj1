@@ -1,15 +1,27 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'dart:io';
+
+const String baseUrl = "http://localhost:3000";
+String? loggedInUserId;
+String? loggedInUsername;
 
 void main() async {
+  await login(); // ให้ล็อกอินก่อน
+
+  if (loggedInUserId == null) {
+    print("Login failed. Exiting...");
+    return;
+  }
+
   while (true) {
     showmenu();
     final choice = stdin.readLineSync();
 
     switch (choice) {
-      case '1':
-        await showall();
+      
+      case '2':
+        await showtoday();
         break;
       case '6':
         print("Goodbye!");
@@ -19,40 +31,6 @@ void main() async {
     }
   }
 }
-
-void showmenu() {
-  print("\n========= Expense Tracking App =========");
-  print("Welcome Tom");
-  print("1. All expenses");
-  print("2. Today's expense");
-  print("3. Search expense");
-  print("4. Add new expense");
-  print("5. Delete an expense");
-  print("6. Exit");
-  stdout.write("Choose...");
-}
-
-Future<void> showall() async {
-  final uri = Uri.parse('http://localhost:3000/expenses');
-  final response = await http.get(uri);
-
-  if (response.statusCode == 200) {
-    final List result = jsonDecode(response.body);
-
-    int total = 0;
-    print("\n------------ All expenses -----------");
-    for (final exp in result) {
-      print('${exp["id"]}. ${exp["item"]} : ${exp["paid"]}฿ : ${exp["date"]}');
-      total += exp["paid"] as int;
-    }
-    print("Total expenses = ${total}฿");
-  } else {
-    print("Error: ${response.statusCode}");
-    print("Connection error!");
-  }
-}
-const String baseUrl = "http://localhost:3000";
-String? loggedInUserId;
 
 Future<void> login() async {
   print("===== Login =====");
@@ -75,12 +53,28 @@ Future<void> login() async {
     final result = jsonDecode(response.body);
     print(" ${result['message']}");
     loggedInUserId = result['userId'].toString();
-    showtoday();
+    loggedInUsername = username;
+    showmenu();
   } else {
     final result = jsonDecode(response.body);
     print(" ${result['message']}");
   }
 }
+
+void showmenu() {
+  
+  print("\n========= Expense Tracking App =========");
+  print("Welcome ${loggedInUsername ?? 'Guest'}");
+  print("1. All expenses");
+  print("2. Today's expense");
+  print("3. Search expense");
+  print("4. Add new expense");
+  print("5. Delete an expense");
+  print("6. Exit");
+  stdout.write("Choose...");
+}
+
+void showall() {}
 
 Future<void> showtoday() async {
   final url = Uri.parse('$baseUrl/expenses/today/$loggedInUserId');
@@ -101,3 +95,7 @@ Future<void> showtoday() async {
     print(" ${response.body}");
   }
 }
+
+void addexpense() {}
+
+void deleteexpense() {}
