@@ -11,6 +11,9 @@ void main() async {
       case '1':
         await showall();
         break;
+      case '3':
+        await searchExpense();
+        break;
       case '6':
         print("Goodbye!");
         return;
@@ -99,5 +102,22 @@ Future<void> showtoday() async {
     print("Total expenses = ${total}\$");
   } else {
     print(" ${response.body}");
+  }
+}
+
+void searchExpense() {
+  stdout.write('Item to search: ');
+  String searchTerm = stdin.readLineSync() ?? '';
+
+  List<Map<String, dynamic>> foundItems = expenses.where((expense) {
+    return expense['item'].toString().toLowerCase().contains(searchTerm.toLowerCase());
+  }).toList();
+
+  if (foundItems.isNotEmpty) {
+    foundItems.forEach((item) {
+      print('${item['id']}. ${item['item']} : ${item['paid']}฿ : ${item['date']}');
+    });
+  } else {
+    print('No item: $searchTerm');
   }
 }
