@@ -1,15 +1,27 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+const String baseUrl = "http://localhost:3000";
+String? loggedInUserId;
+String? loggedInUsername;
 
 void main() async {
+    await login(); // ให้ล็อกอินก่อน
+
+  if (loggedInUserId == null) {
+    print("Login failed. Exiting...");
+    return;
+  }
+
   while (true) {
-    showmenu();
     final choice = stdin.readLineSync();
 
     switch (choice) {
       case '1':
         await showall();
+        break;
+      case '2':
+        await showtoday();
         break;
       case '3':
         await searchExpense();
@@ -23,39 +35,6 @@ void main() async {
   }
 }
 
-void showmenu() {
-  print("\n========= Expense Tracking App =========");
-  print("Welcome Tom");
-  print("1. All expenses");
-  print("2. Today's expense");
-  print("3. Search expense");
-  print("4. Add new expense");
-  print("5. Delete an expense");
-  print("6. Exit");
-  stdout.write("Choose...");
-}
-
-Future<void> showall() async {
-  final uri = Uri.parse('http://localhost:3000/expenses');
-  final response = await http.get(uri);
-
-  if (response.statusCode == 200) {
-    final List result = jsonDecode(response.body);
-
-    int total = 0;
-    print("\n------------ All expenses -----------");
-    for (final exp in result) {
-      print('${exp["id"]}. ${exp["item"]} : ${exp["paid"]}฿ : ${exp["date"]}');
-      total += exp["paid"] as int;
-    }
-    print("Total expenses = ${total}฿");
-  } else {
-    print("Error: ${response.statusCode}");
-    print("Connection error!");
-  }
-}
-const String baseUrl = "http://localhost:3000";
-String? loggedInUserId;
 
 Future<void> login() async {
   print("===== Login =====");
@@ -78,12 +57,48 @@ Future<void> login() async {
     final result = jsonDecode(response.body);
     print(" ${result['message']}");
     loggedInUserId = result['userId'].toString();
-    showtoday();
+    loggedInUsername = username;
+    showmenu();
   } else {
     final result = jsonDecode(response.body);
     print(" ${result['message']}");
   }
 }
+void showmenu() {
+  
+  print("\n========= Expense Tracking App =========");
+  print("Welcome ${loggedInUsername ?? 'Guest'}");
+  print("1. All expenses");
+  print("2. Today's expense");
+  print("3. Search expense");
+  print("4. Add new expense");
+  print("5. Delete an expense");
+  print("6. Exit");
+  stdout.write("Choose...");
+}
+
+Future<void> showall() async {
+final uri = Uri.parse('$baseUrl/expenses?userId=$loggedInUserId');
+final response = await http.get(uri);
+
+
+  if (response.statusCode == 200) {
+    final List result = jsonDecode(response.body);
+
+    int total = 0;
+    print("\n------------ All expenses -----------");
+    for (final exp in result) {
+      print('${exp["id"]}. ${exp["item"]} : ${exp["paid"]}฿ : ${exp["date"]}');
+      total += exp["paid"] as int;
+    }
+    print("Total expenses = ${total}฿");
+    showmenu();
+  } else {
+    print("Error: ${response.statusCode}");
+    print("Connection error!");
+  }
+}
+
 
 Future<void> showtoday() async {
   final url = Uri.parse('$baseUrl/expenses/today/$loggedInUserId');
@@ -105,19 +120,33 @@ Future<void> showtoday() async {
   }
 }
 
-void searchExpense() {
+Future<void> searchExpense() async {
   stdout.write('Item to search: ');
   String searchTerm = stdin.readLineSync() ?? '';
 
-  List<Map<String, dynamic>> foundItems = expenses.where((expense) {
-    return expense['item'].toString().toLowerCase().contains(searchTerm.toLowerCase());
-  }).toList();
+  if (loggedInUserId == null) {
+    print("You are not logged in");
+    return;
+  }
 
-  if (foundItems.isNotEmpty) {
-    foundItems.forEach((item) {
-      print('${item['id']}. ${item['item']} : ${item['paid']}฿ : ${item['date']}');
-    });
+  final uri = Uri.parse('$baseUrl/expenses/search?userId=$loggedInUserId&item=$searchTerm');
+
+  final response = await http.get(uri);
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body) as List;
+
+    if (data.isEmpty) {
+      print('No item: $searchTerm');
+      return;
+    }
+
+    for (var exp in data) {
+      print('${exp["id"]}. ${exp["item"]} : ${exp["paid"]}฿ : ${exp["date"]}');
+    }
+    showmenu();
   } else {
-    print('No item: $searchTerm');
+    print("Error: ${response.statusCode}");
+    print("Connection error!");
   }
 }
