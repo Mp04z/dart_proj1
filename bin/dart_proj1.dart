@@ -130,7 +130,6 @@ Future<void> searchExpense() async {
   }
 
   final uri = Uri.parse('$baseUrl/expenses/search?userId=$loggedInUserId&item=$searchTerm');
-
   final response = await http.get(uri);
 
   if (response.statusCode == 200) {
