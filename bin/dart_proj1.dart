@@ -23,6 +23,9 @@ void main() async {
       case '2':
         await showtoday();
         break;
+      case '3':
+        await searchExpense();
+        break;
       case '6':
         print("Goodbye!");
         return;
@@ -114,5 +117,36 @@ Future<void> showtoday() async {
     print("Total expenses = ${total}\$");
   } else {
     print(" ${response.body}");
+  }
+}
+
+Future<void> searchExpense() async {
+  stdout.write('Item to search: ');
+  String searchTerm = stdin.readLineSync() ?? '';
+
+  if (loggedInUserId == null) {
+    print("You are not logged in");
+    return;
+  }
+
+  final uri = Uri.parse('$baseUrl/expenses/search?userId=$loggedInUserId&item=$searchTerm');
+
+  final response = await http.get(uri);
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body) as List;
+
+    if (data.isEmpty) {
+      print('No item: $searchTerm');
+      return;
+    }
+
+    for (var exp in data) {
+      print('${exp["id"]}. ${exp["item"]} : ${exp["paid"]}฿ : ${exp["date"]}');
+    }
+    showmenu();
+  } else {
+    print("Error: ${response.statusCode}");
+    print("Connection error!");
   }
 }
