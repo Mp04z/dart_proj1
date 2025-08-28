@@ -51,3 +51,53 @@ Future<void> showall() async {
     print("Connection error!");
   }
 }
+const String baseUrl = "http://localhost:3000";
+String? loggedInUserId;
+
+Future<void> login() async {
+  print("===== Login =====");
+
+  stdout.write("Username: ");
+  String? username = stdin.readLineSync()?.trim();
+  stdout.write("Password: ");
+  String? password = stdin.readLineSync()?.trim();
+
+  if (username == null || password == null || username.isEmpty || password.isEmpty) {
+    print("Incomplete input");
+    return;
+  }
+
+  final body = {"username": username, "password": password};
+  final url = Uri.parse('$baseUrl/login');
+  final response = await http.post(url, body: body);
+
+  if (response.statusCode == 200) {
+    final result = jsonDecode(response.body);
+    print(" ${result['message']}");
+    loggedInUserId = result['userId'].toString();
+    showtoday();
+  } else {
+    final result = jsonDecode(response.body);
+    print(" ${result['message']}");
+  }
+}
+
+Future<void> showtoday() async {
+  final url = Uri.parse('$baseUrl/expenses/today/$loggedInUserId');
+  final response = await http.get(url);
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body) as List;
+    int total = 0;
+    print("---------- Today's expenses ----------");
+    for (var i = 0; i < data.length; i++) {
+      print(
+        "${i + 1}. ${data[i]['item']} : ${data[i]['paid']}\$ : ${data[i]['date']}",
+      );
+      total += int.tryParse(data[i]['paid'].toString()) ?? 0;
+    }
+    print("Total expenses = ${total}\$");
+  } else {
+    print(" ${response.body}");
+  }
+}
