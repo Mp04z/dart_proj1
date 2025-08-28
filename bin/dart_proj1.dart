@@ -6,7 +6,7 @@ String? loggedInUserId;
 String? loggedInUsername;
 
 void main() async {
-    await login(); // ให้ล็อกอินก่อน
+  await login(); // ให้ล็อกอินก่อน
 
   if (loggedInUserId == null) {
     print("Login failed. Exiting...");
@@ -14,6 +14,7 @@ void main() async {
   }
 
   while (true) {
+    showmenu();
     final choice = stdin.readLineSync();
 
     switch (choice) {
@@ -21,23 +22,16 @@ void main() async {
         await showall();
         break;
       case '2':
-<<<<<<< HEAD
         await showtoday();
         break;
       case '3':
         await searchExpense();
-=======
-        print("Feature not implemented yet.");
-        break;
-      case '3':
-        print("Feature not implemented yet.");
         break;
       case '4':
         await addExpense();
         break;
       case '5':
         await deleteExpense();
->>>>>>> Add-deleteExpenses
         break;
       case '6':
         print("-----Bye-----");
@@ -47,7 +41,6 @@ void main() async {
     }
   }
 }
-
 
 Future<void> login() async {
   print("===== Login =====");
@@ -71,14 +64,13 @@ Future<void> login() async {
     print(" ${result['message']}");
     loggedInUserId = result['userId'].toString();
     loggedInUsername = username;
-    showmenu();
   } else {
     final result = jsonDecode(response.body);
     print(" ${result['message']}");
   }
 }
+
 void showmenu() {
-  
   print("\n========= Expense Tracking App =========");
   print("Welcome ${loggedInUsername ?? 'Guest'}");
   print("1. All expenses");
@@ -91,13 +83,11 @@ void showmenu() {
 }
 
 Future<void> showall() async {
-final uri = Uri.parse('$baseUrl/expenses?userId=$loggedInUserId');
-final response = await http.get(uri);
-
+  final uri = Uri.parse('$baseUrl/expenses?userId=$loggedInUserId');
+  final response = await http.get(uri);
 
   if (response.statusCode == 200) {
     final List result = jsonDecode(response.body);
-
     int total = 0;
     print("\n------------ All expenses -----------");
     for (final exp in result) {
@@ -105,14 +95,11 @@ final response = await http.get(uri);
       total += exp["paid"] as int;
     }
     print("Total expenses = ${total}฿");
-    showmenu();
   } else {
     print("Error: ${response.statusCode}");
     print("Connection error!");
   }
 }
-
-<<<<<<< HEAD
 
 Future<void> showtoday() async {
   final url = Uri.parse('$baseUrl/expenses/today/$loggedInUserId');
@@ -123,12 +110,10 @@ Future<void> showtoday() async {
     int total = 0;
     print("---------- Today's expenses ----------");
     for (var i = 0; i < data.length; i++) {
-      print(
-        "${i + 1}. ${data[i]['item']} : ${data[i]['paid']}\$ : ${data[i]['date']}",
-      );
+      print("${i + 1}. ${data[i]['item']} : ${data[i]['paid']}฿ : ${data[i]['date']}");
       total += int.tryParse(data[i]['paid'].toString()) ?? 0;
     }
-    print("Total expenses = ${total}\$");
+    print("Total expenses = ${total}฿");
   } else {
     print(" ${response.body}");
   }
@@ -144,7 +129,6 @@ Future<void> searchExpense() async {
   }
 
   final uri = Uri.parse('$baseUrl/expenses/search?userId=$loggedInUserId&item=$searchTerm');
-
   final response = await http.get(uri);
 
   if (response.statusCode == 200) {
@@ -158,11 +142,12 @@ Future<void> searchExpense() async {
     for (var exp in data) {
       print('${exp["id"]}. ${exp["item"]} : ${exp["paid"]}฿ : ${exp["date"]}');
     }
-    showmenu();
   } else {
     print("Error: ${response.statusCode}");
     print("Connection error!");
-=======
+  }
+}
+
 Future<void> addExpense() async {
   print("===== Add new expense =====");
   stdout.write("Item name: ");
@@ -187,7 +172,7 @@ Future<void> addExpense() async {
     uri,
     headers: {"Content-Type": "application/json"},
     body: jsonEncode({
-      "user_id": 2,
+      "user_id": int.parse(loggedInUserId!),
       "item": item,
       "paid": paid,
     }),
@@ -221,6 +206,5 @@ Future<void> deleteExpense() async {
   } else {
     print("Error: ${response.statusCode}");
     print(response.body);
->>>>>>> Add-deleteExpenses
   }
 }
